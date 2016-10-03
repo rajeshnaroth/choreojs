@@ -2,7 +2,8 @@ import { pipeP } from 'ramda'
 
 const Choreo = {
 	create() {
-		let sequences = [];
+		let sequences = []
+		let isStarted = false
 		return Object.create({
 			// For async functions that need to be waited upon.
 			addPromise(promise) {
@@ -16,7 +17,8 @@ const Choreo = {
 					cancellableTimeout(sequence, 1)
 				)
 			},
-			wait(delay) { // Essentially do nothing for sometime. 
+			// Do nothing for sometime.
+			wait(delay) {  
 				sequences.push(
 					cancellableTimeout((arg) => arg, delay)
 				)
@@ -28,8 +30,9 @@ const Choreo = {
 				sequences.map(sequence => sequence.cancel())
 			},
 			start() {
-				if (sequences.length > 0) {
+				if (!isStarted && sequences.length > 0) {
 					pipeP(...(sequences.map(s => s.promise)))()
+					isStarted = true
 				}
 			}
 		})

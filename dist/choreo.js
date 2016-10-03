@@ -1,73 +1,92 @@
-import { pipeP } from 'ramda'
+'use strict';
 
-const Choreo = {
-	create() {
-		let sequences = [];
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.cancellablePromise = exports.cancellableTimeout = undefined;
+
+var _ramda = require('ramda');
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var Choreo = {
+	create: function create() {
+		var sequences = [];
+		var isStarted = false;
 		return Object.create({
 			// For async functions that need to be waited upon.
-			addPromise(promise) {
-				sequences.push(
-					cancellablePromise(promise)
-				)
+			addPromise: function addPromise(promise) {
+				sequences.push(cancellablePromise(promise));
 			},
+
 			// Sequence is a normal function.
-			add(sequence) {
-				sequences.push(
-					cancellableTimeout(sequence, 1)
-				)
+			add: function add(sequence) {
+				sequences.push(cancellableTimeout(sequence, 1));
 			},
-			wait(delay) { // Essentially do nothing for sometime. 
-				sequences.push(
-					cancellableTimeout((arg) => arg, delay)
-				)
+
+			// Do nothing for sometime.
+			wait: function wait(delay) {
+				sequences.push(cancellableTimeout(function (arg) {
+					return arg;
+				}, delay));
 			},
-			popLast() {
-				sequences.pop()
+			popLast: function popLast() {
+				sequences.pop();
 			},
-			cancel() {
-				sequences.map(sequence => sequence.cancel())
+			cancel: function cancel() {
+				sequences.map(function (sequence) {
+					return sequence.cancel();
+				});
 			},
-			start() {
-				if (sequences.length > 0) {
-					pipeP(...(sequences.map(s => s.promise)))()
+			start: function start() {
+				if (!isStarted && sequences.length > 0) {
+					_ramda.pipeP.apply(undefined, _toConsumableArray(sequences.map(function (s) {
+						return s.promise;
+					})))();
+					isStarted = true;
 				}
 			}
-		})
+		});
 	}
-}
+};
 
 // f is a normal function of arity 0. You can send it in curried 
-export const cancellableTimeout = (f, milliseconds) => { 
-	let timerId = 0
+var cancellableTimeout = exports.cancellableTimeout = function cancellableTimeout(f, milliseconds) {
+	var timerId = 0;
 	return {
-		promise: (arg) => new Promise((resolve, reject) =>  {
-			timerId = setTimeout(
-				() => { 
-					timerId = 0 					        
-					resolve(f(arg))
-				}, milliseconds)
-		}),
-		cancel: () => {
+		promise: function promise(arg) {
+			return new Promise(function (resolve, reject) {
+				timerId = setTimeout(function () {
+					timerId = 0;
+					resolve(f(arg));
+				}, milliseconds);
+			});
+		},
+		cancel: function cancel() {
 			if (timerId > 0) {
-				clearTimeout(timerId)
+				clearTimeout(timerId);
 			}
 		}
-	}
-}
+	};
+};
 
-export const cancellablePromise = (promiseReturningFunction) => {
-	let isCanceled = false;
+var cancellablePromise = exports.cancellablePromise = function cancellablePromise(promiseReturningFunction) {
+	var isCanceled = false;
 
 	return {
-		promise: (arg) => new Promise((resolve, reject) => {
-			promiseReturningFunction()
-				.then(() => isCanceled ? reject({isCanceled: true}) : resolve(arg))
-				.catch((error) => isCanceled ? reject({isCanceled: true}) : reject(error))
-		}),
-		cancel() {
-		  isCanceled = true;
+		promise: function promise(arg) {
+			return new Promise(function (resolve, reject) {
+				promiseReturningFunction().then(function () {
+					return isCanceled ? reject({ isCanceled: true }) : resolve(arg);
+				}).catch(function (error) {
+					return isCanceled ? reject({ isCanceled: true }) : reject(error);
+				});
+			});
+		},
+		cancel: function cancel() {
+			isCanceled = true;
 		}
-	}
-}
+	};
+};
 
-export default Choreo
+exports.default = Choreo;
