@@ -8,13 +8,16 @@ Choreograph functions and promises. Quite useful for sequencing UI and event tra
     sequence.add(func2)
 and so on. fun1 and fun2 are regular functions.
 If you want to add a promise instead, do 
+
     sequence.addPromise(promise)
 
 When you are ready to start the sequence, do 
+
     sequence.start()
 
 This will choreograph your functions as specified.
 If you need to cancel a sequence in progress, do 
+
     sequence.cancel() 
 
 This is especially useful if your components unmount while a sequence is in progress.
@@ -23,6 +26,7 @@ Each function can return a value to be passed on to the next function/promise. V
 
 ## How to run the examples
 Choreo is ES6 only. You will need to use babel to help with the new 'import' syntax in ES6. To run the examples here do:
+
     git clone https://github.com/rajeshnaroth/choreo.git
     cd choreo
     npm install
