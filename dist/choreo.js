@@ -1,123 +1,75 @@
-(function (global, factory) {
-	if (typeof define === "function" && define.amd) {
-		define(['exports', 'ramda'], factory);
-	} else if (typeof exports !== "undefined") {
-		factory(exports, require('ramda'));
-	} else {
-		var mod = {
-			exports: {}
-		};
-		factory(mod.exports, global.ramda);
-		global.choreo = mod.exports;
-	}
-})(this, function (exports) {
-	(function (global, factory) {
-		if (typeof define === "function" && define.amd) {
-			define(['exports', 'ramda'], factory);
-		} else if (typeof exports !== "undefined") {
-			factory(exports);
-		} else {
-			var mod = {
-				exports: {}
-			};
-			factory(mod.exports, global.ramda);
-			global.choreo = mod.exports;
-		}
-	})(this, function (exports, _ramda) {
-		'use strict';
+import { pipeP } from 'ramda'
 
-		Object.defineProperty(exports, "__esModule", {
-			value: true
-		});
-		exports.cancellablePromise = exports.cancellableTimeout = undefined;
-
-		function _toConsumableArray(arr) {
-			if (Array.isArray(arr)) {
-				for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-					arr2[i] = arr[i];
+const Choreo = {
+	create:function() {
+		let sequences = []
+		let isStarted = false
+		return Object.create({
+			// For async functions that need to be waited upon.
+			addPromise(promise) {
+				sequences.push(
+					cancellablePromise(promise)
+				)
+			},
+			// Sequence is a normal function.
+			add(sequence) {
+				sequences.push(
+					cancellableTimeout(sequence, 1)
+				)
+			},
+			// Do nothing for sometime.
+			wait(delay) {  
+				sequences.push(
+					cancellableTimeout((arg) => arg, delay)
+				)
+			},
+			popLast() {
+				sequences.pop()
+			},
+			cancel() {
+				sequences.map(sequence => sequence.cancel())
+			},
+			start() {
+				if (!isStarted && sequences.length > 0) {
+					pipeP(...(sequences.map(s => s.promise)))()
+					isStarted = true
 				}
-
-				return arr2;
-			} else {
-				return Array.from(arr);
 			}
-		}
-
-		var Choreo = {
-			create: function create() {
-				var sequences = [];
-				var isStarted = false;
-				return Object.create({
-					addPromise: function addPromise(promise) {
-						sequences.push(cancellablePromise(promise));
-					},
-					add: function add(sequence) {
-						sequences.push(cancellableTimeout(sequence, 1));
-					},
-					wait: function wait(delay) {
-						sequences.push(cancellableTimeout(function (arg) {
-							return arg;
-						}, delay));
-					},
-					popLast: function popLast() {
-						sequences.pop();
-					},
-					cancel: function cancel() {
-						sequences.map(function (sequence) {
-							return sequence.cancel();
-						});
-					},
-					start: function start() {
-						if (!isStarted && sequences.length > 0) {
-							_ramda.pipeP.apply(undefined, _toConsumableArray(sequences.map(function (s) {
-								return s.promise;
-							})))();
-							isStarted = true;
-						}
-					}
-				});
-			}
-		};
-
+		})
 		// f is a normal function of arity 0. You can send it in curried 
-		var cancellableTimeout = exports.cancellableTimeout = function cancellableTimeout(f, milliseconds) {
-			var timerId = 0;
+		function cancellableTimeout(f, milliseconds) { 
+			let timerId = 0
 			return {
-				promise: function promise(arg) {
-					return new Promise(function (resolve, reject) {
-						timerId = setTimeout(function () {
-							timerId = 0;
-							resolve(f(arg));
-						}, milliseconds);
-					});
-				},
-				cancel: function cancel() {
+				promise: (arg) => new Promise((resolve, reject) =>  {
+					timerId = setTimeout(
+						() => { 
+							timerId = 0 					        
+							resolve(f(arg))
+						}, milliseconds)
+				}),
+				cancel: () => {
 					if (timerId > 0) {
-						clearTimeout(timerId);
+						clearTimeout(timerId)
 					}
 				}
-			};
-		};
-
-		var cancellablePromise = exports.cancellablePromise = function cancellablePromise(promiseReturningFunction) {
-			var isCanceled = false;
+			}
+		}
+		//
+		function cancellablePromise(promiseReturningFunction) {
+			let isCanceled = false;
 
 			return {
-				promise: function promise(arg) {
-					return new Promise(function (resolve, reject) {
-						promiseReturningFunction().then(function () {
-							return isCanceled ? reject({ isCanceled: true }) : resolve(arg);
-						}).catch(function (error) {
-							return isCanceled ? reject({ isCanceled: true }) : reject(error);
-						});
-					});
-				},
-				cancel: function cancel() {
-					isCanceled = true;
+				promise: (arg) => new Promise((resolve, reject) => {
+					promiseReturningFunction()
+						.then(() => isCanceled ? reject({isCanceled: true}) : resolve(arg))
+						.catch((error) => isCanceled ? reject({isCanceled: true}) : reject(error))
+				}),
+				cancel() {
+				  isCanceled = true;
 				}
-			};
-		};
+			}
+		}
+	}
+}
 
-		exports.default = Choreo;
-	});
-});
+export default Choreo

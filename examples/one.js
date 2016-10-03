@@ -1,6 +1,7 @@
 'use strict';
 import Choreo from '../src/choreo'
-
+console.log("one.js: ", Choreo);
+        
 console.log('examples/one.js start')
 let sequence = Choreo.create()
 sequence.add(() => {console.log("step 1"); return '1'})

@@ -10,8 +10,8 @@
     "test": "babel-node test/index.js",
 
     "build:es": "cp src/choreo.js dist",
-    "build:umd": "babel src --presets babel-preset-es2015  --plugins babel-plugin-transform-es2015-modules-umd --out-dir dist",
-    "build": "npm run build:umd",
+    "build:umd": "babel src --presets babel-preset-es2015  --plugins babel-plugin-transform-es2015-modules-umd --out-file dist/choreo.umd.js",
+    "build": "npm run build:es && npm run build:umd",
     "prepublish": "npm run build",
 
     "lint": "eslint src examples test"
