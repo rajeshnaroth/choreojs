@@ -1,16 +1,4 @@
 import { pipeP } from 'ramda'
-//
-// Usage: let sequence = Choreo.create()
-// sequence.add(fun1)
-// sequence.delay(1000)
-// sequence.add(func2)
-// and so on. fun1 and fun2 are regular functions.
-// If you want to add a promise instead, do sequence.addPromise(promise)
-//
-// When you are ready to start the sequence, do sequence.start()
-// THis will choreograph your functions as specified.
-// If you need to cancel, do sequence.cancel() 
-// This is especially useful if your components unmount while a sequence is in progress.
 
 const Choreo = {
 	create() {
