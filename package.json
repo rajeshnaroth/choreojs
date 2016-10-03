@@ -1,0 +1,39 @@
+{
+  "name": "choreo",
+  "version": "1.0.0",
+  "description": "Choreograph functions and promises. Quite useful for sequencing UI and event transitions. ES6 only.",
+  "main": "index.js",
+  "scripts": {
+    "example1": "babel-node examples/one.js",
+    "test": "babel-node test/index.js",
+    "build:es": "cp src/choreo.js dist",
+    "build": "npm run build:es",
+    "lint": "eslint src examples test"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajeshnaroth/choreojs.git"
+  },
+  "keywords": [
+    "sequence",
+    "choreograph",
+    "chain"
+  ],
+  "author": "Rajesh Naroth",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rajeshnaroth/choreojs/issues"
+  },
+  "homepage": "https://github.com/rajeshnaroth/choreojs#readme",
+  "dependencies": {
+    "ramda": "^0.22.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.16.0",
+    "eslint": "^3.7.0"
+  }
+}
