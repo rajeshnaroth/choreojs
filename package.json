@@ -1,14 +1,19 @@
 {
   "name": "choreojs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Choreograph functions and promises. Quite useful for sequencing UI and event transitions.",
   "main": "index.js",
   "scripts": {
     "example1": "babel-node examples/one.js",
+    "examples": "npm run example1",
+
     "test": "babel-node test/index.js",
+
     "build:es": "cp src/choreo.js dist",
-    "build:amd": "babel src --presets babel-preset-es2015 --out-dir dist",
-    "build": "npm run build:es",
+    "build:umd": "babel src --presets babel-preset-es2015  --plugins babel-plugin-transform-es2015-modules-umd --out-dir dist",
+    "build": "npm run build:umd",
+    "prepublish": "npm run build",
+
     "lint": "eslint src examples test"
   },
   "files": [
