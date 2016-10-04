@@ -1,5 +1,4 @@
-'use strict';
-import Choreo from '../src/choreo'
+import Choreo from 'choreojs'
 console.log("one.js: ", Choreo);
         
 console.log('examples/one.js start')

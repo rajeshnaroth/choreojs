@@ -4,7 +4,7 @@ Choreograph functions and promises. Quite useful for sequencing UI and event tra
 ## Usage
     let sequence = Choreo.create()
     sequence.add(fun1)
-    sequence.delay(1000)
+    sequence.wait(1000)
     sequence.add(func2)
 and so on. fun1 and fun2 are regular functions.
 If you want to add a promise instead, do 
