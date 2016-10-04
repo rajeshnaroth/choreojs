@@ -29,8 +29,11 @@ This is especially useful if your components unmount while a sequence is in prog
 
 Each function can return a value to be passed on to the next function/promise. Very useful if one of the events is an xhr promise such as getJson(url)
 
-## Links
-* [Live example on jsbin](https://jsbin.com/jivima/edit?html,js,output)
+## Live Examples
+* [Choreograph entry and exit apparance of a form](https://jsbin.com/koqoka/edit?js,output)
+* [Simple choreographed actions](https://jsbin.com/jivima/edit?html,js,output)
+
+## Source
 * [Choreojs Git](https://github.com/rajeshnaroth/choreo.git)
 
 ## How to run the examples

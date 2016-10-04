@@ -1,7 +1,8 @@
 'use strict';
 import Choreo from '../src/choreo'
 import expect from 'expect'
-
+const TIMING_ACCURACY = 50
+const timeInMillisec = () => (new Date()).getTime()
 describe('Choreo', function() {
 	describe('Test setup', () => {
 		it('should be ok', () => {
@@ -51,8 +52,52 @@ describe('Choreo', function() {
 		
 	})
 
-	describe('timings are triggered properly', () => {})
-	describe('values are passed through the chain', () => {})
+	describe('timings are triggered properly', () => {
+		let triggerTiming = [];
+		let startTime = 0;
+		let seq = Choreo.create();
+		this.timeout(5000);
+		console.log("index.js: ", timeInMillisec());
+		        
+		beforeEach((done) => {
+			seq.wait(1000)
+			seq.add(() => { triggerTiming[0] = timeInMillisec()})
+			seq.wait(1500)
+			seq.add(() => { triggerTiming[1] = timeInMillisec()})
+			seq.wait(100)
+			seq.add(() => { triggerTiming[2] = timeInMillisec()})
+			seq.add(() => { done() })
+			startTime = timeInMillisec()
+			seq.start()
+		})
+
+		it('triggers with correct timings', () => {
+			expect(Math.floor(Math.floor(triggerTiming[0]- startTime)/TIMING_ACCURACY)*TIMING_ACCURACY).toEqual(1000)
+			expect(Math.floor(Math.floor(triggerTiming[1]- startTime)/TIMING_ACCURACY)*TIMING_ACCURACY).toEqual(2500)
+			expect(Math.floor(Math.floor(triggerTiming[2]- startTime)/TIMING_ACCURACY)*TIMING_ACCURACY).toEqual(2600)
+		})
+
+	})
+	describe('values are passed through the chain', () => {
+		let seq = Choreo.create()
+		let values = [];
+		this.timeout(5000);
+
+		beforeEach((done) => {
+			seq.add(() => { return 'a' })
+			seq.add((val) => { values.push(val); return 'b'  })
+			seq.add((val) => { values.push(val); return 'c'  })
+			seq.add((val) => { values.push(val) })
+			seq.add(() => { done() })
+			seq.start()
+		})
+
+		it('values are passed through a chain', () => {
+			expect(values[0]).toEqual('a')
+			expect(values[1]).toEqual('b')
+			expect(values[2]).toEqual('c')
+		})
+	})
 	describe('promises work', () => {})
 		
 })
