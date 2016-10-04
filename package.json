@@ -1,23 +1,25 @@
 {
   "name": "choreojs",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Choreograph functions and promises. Quite useful for sequencing UI and event transitions.",
   "main": "dist/choreo.js",
   "scripts": {
     "example1": "babel-node examples/one.js",
     "examples": "npm run example1",
+
     "test": "babel-node test/index.js",
     "build:lib": "babel src --out-dir lib",
     "build:umd": "cross-env NODE_ENV=development webpack src/choreo.js dist/choreo.js",
     "build:umd-min": "cross-env NODE_ENV=production webpack src/choreo.js dist/choreo-min.js",
     "build": "npm run build:lib && npm run build:umd && npm run build:umd-min",
-    "clean": "rm lib/* dist/*",
     "prepublish": "npm run build",
-    "lint": "eslint src examples test"
+
+    "lint": "eslint src examples test",
+
+    "clean": "rm lib/* dist/*"
   },
   "files": [
     "dist",
-    "lib",
     "src"
   ],
   "repository": {

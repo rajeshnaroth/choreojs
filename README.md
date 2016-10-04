@@ -1,7 +1,12 @@
 # choreo
 Choreograph functions and promises. Quite useful for sequencing UI and event transitions. ES6 only.
 
+## installation
+    npm install choreojs --save
+
 ## Usage
+    import Choreo from 'choreojs'
+
     let sequence = Choreo.create()
     sequence.add(fun1)
     sequence.wait(1000)
@@ -23,6 +28,10 @@ If you need to cancel a sequence in progress, do
 This is especially useful if your components unmount while a sequence is in progress.
 
 Each function can return a value to be passed on to the next function/promise. Very useful if one of the events is an xhr promise such as getJson(url)
+
+## Live example
+    https://jsbin.com/jivima/edit?html,js,output
+
 
 ## How to run the examples
 Choreo is ES6 only. You will need to use babel to help with the new 'import' syntax in ES6. To run the examples here do:
