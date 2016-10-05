@@ -1,4 +1,4 @@
-# choreo
+# choreo.js
 Choreograph functions and promises. Quite useful for sequencing UI and event transitions. ES6 only.
 
 ## Installation
@@ -35,17 +35,17 @@ Each function can return a value to be passed on to the next function/promise. V
 When User clicks on a button.
 - You display a spinner
 - Make an ajax call
-- Display the results (Maybe add some cool css transitions)
 - Stop the spinner
+- Display the results (Maybe add some cool css transitions)
 
 This is quite straightforward with choreojs
 The following two lines will kick off a json request (assuming that getJson is a promise)
+
     seq.add(() => $('#spinner').show())
     seq.add(() => api) // Remember, you can relay data from one to next. Very similar to pointfree style in pipeP
     seq.addPromise(getJson)
-    seq.add((val) => { $('#spinner').show(); return val;} ) // you simply relay the json result to the next function
+    seq.add((val) => { $('#spinner').hide(); return val;} ) // you simply relay the json result to the next function
     seq.add((val) => $('#results').text(val) )
-
 
 ## Live Examples for React
 * [Choreograph ajax calls and css transitions](https://jsbin.com/rinudu/edit?js,output)
