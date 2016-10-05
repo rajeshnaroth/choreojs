@@ -1,6 +1,6 @@
 {
   "name": "choreojs",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Choreograph functions and promises. Quite useful for sequencing UI and event transitions.",
   "main": "dist/choreo.js",
   "scripts": {

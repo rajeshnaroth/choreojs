@@ -1,14 +1,14 @@
 import { pipeP } from 'ramda'
 
 const Choreo = {
-	create:function() {
+	create() {
 		let sequences = []
 		let isStarted = false
 		return Object.create({
 			// For async functions that need to be waited upon.
-			addPromise(promise) {
+			addPromise(functionThatReturnsAPromise) {
 				sequences.push(
-					cancellablePromise(promise)
+					cancellablePromise(functionThatReturnsAPromise)
 				)
 			},
 			// Sequence is a normal function.
@@ -31,43 +31,47 @@ const Choreo = {
 			},
 			start() {
 				if (!isStarted && sequences.length > 0) {
-					pipeP(...(sequences.map(s => s.promise)))()
+					pipeP(...(sequences.map(s => s.promise)))('')
 					isStarted = true
 				}
 			}
 		})
-		// f is a normal function of arity 0. You can send it in curried 
-		function cancellableTimeout(f, milliseconds) { 
-			let timerId = 0
-			return {
-				promise: (arg) => new Promise((resolve, reject) =>  {
-					timerId = setTimeout(
-						() => { 
-							timerId = 0 					        
-							resolve(f(arg))
-						}, milliseconds)
-				}),
-				cancel: () => {
-					if (timerId > 0) {
-						clearTimeout(timerId)
-					}
-				}
+	},
+	cancellableTimeout,
+	cancellablePromise
+}
+
+// f is a normal function of arity 0. You can send it in curried 
+function cancellableTimeout(f, milliseconds) { 
+	let timerId = 0
+	return {
+		promise: (arg) => new Promise((resolve, reject) =>  {
+			timerId = setTimeout(
+				() => { 
+					timerId = 0 					        
+					resolve(f(arg))
+				}, milliseconds)
+		}),
+		cancel: () => {
+			if (timerId > 0) {
+				clearTimeout(timerId)
 			}
 		}
-		//
-		function cancellablePromise(promiseReturningFunction) {
-			let isCanceled = false;
+	}
+}
 
-			return {
-				promise: (arg) => new Promise((resolve, reject) => {
-					promiseReturningFunction()
-						.then(() => isCanceled ? reject({isCanceled: true}) : resolve(arg))
-						.catch((error) => isCanceled ? reject({isCanceled: true}) : reject(error))
-				}),
-				cancel() {
-				  isCanceled = true;
-				}
-			}
+// Adapted & modified from https://github.com/facebook/react/issues/5465#issuecomment-157888325
+function cancellablePromise(functionThatReturnsAPromise) {
+	let isCanceled = false;
+	        
+	return {
+		promise: (arg) => new Promise((resolve, reject) => {	
+			functionThatReturnsAPromise(arg)
+				.then((val)    => isCanceled ? reject({isCanceled: true}) : resolve(val))
+				.catch((error) => isCanceled ? reject({isCanceled: true}) : reject(error))
+		}),
+		cancel: () => {
+		  isCanceled = true;
 		}
 	}
 }

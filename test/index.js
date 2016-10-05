@@ -2,7 +2,17 @@
 import Choreo from '../src/choreo'
 import expect from 'expect'
 const TIMING_ACCURACY = 50
+
 const timeInMillisec = () => (new Date()).getTime()
+
+const asyncPromise = (f, millisec) => {
+	return (input) => new Promise((resolve, reject) =>  {
+		setTimeout(() => { 
+		        resolve(f(input))
+		    }, millisec)
+	})
+}
+
 describe('Choreo', function() {
 	describe('Test setup', () => {
 		it('should be ok', () => {
@@ -78,15 +88,38 @@ describe('Choreo', function() {
 		})
 
 	})
-	describe('values are passed through the chain', () => {
+
+	describe('Values are passed through the chain', () => {
+		let seq = Choreo.create()
+		let chainedVal = '';
+		this.timeout(5000);
+
+		beforeEach((done) => {
+			seq.add(() => 'a')
+			seq.add((val) => val + 'b')
+			seq.add((val) => val + 'c')
+			seq.add((val) => { chainedVal = val })
+			seq.add(() => { done() })
+			seq.start()
+		})
+
+		it('values are passed through a chain', () => {
+			expect(chainedVal).toEqual('abc')
+		})
+	})
+
+	describe('Values are passed through the chain even with waits', () => {
 		let seq = Choreo.create()
 		let values = [];
 		this.timeout(5000);
 
 		beforeEach((done) => {
 			seq.add(() => { return 'a' })
+			seq.wait(100)
 			seq.add((val) => { values.push(val); return 'b'  })
+			seq.wait(100)
 			seq.add((val) => { values.push(val); return 'c'  })
+			seq.wait(100)
 			seq.add((val) => { values.push(val) })
 			seq.add(() => { done() })
 			seq.start()
@@ -98,6 +131,43 @@ describe('Choreo', function() {
 			expect(values[2]).toEqual('c')
 		})
 	})
-	describe('promises work', () => {})
+
+	describe('promises work', () => {
+		let seq = Choreo.create()
+		let values = [];
+		this.timeout(5000);
+
+		beforeEach((done) => {
+			seq.add(() => { return 'a' })
+			seq.addPromise(asyncPromise(val => val, 1000))
+			seq.add((val) => { values.push(val);})
+			seq.add(() => { done() })
+			seq.start()
+		})
+
+		it('timeout was called', () => {
+			expect(values[0]).toEqual('a')
+		})
+	})
+
+	describe('promises are called in sequence', () => {
+		let seq = Choreo.create()
+		let chainedVal = '';
+		this.timeout(5000);
+
+		beforeEach((done) => {
+			seq.add(() => { return 'a' }) // 'a' is the first input to the promise chain
+			seq.addPromise(asyncPromise(val => val + 'b', 100))
+			seq.addPromise(asyncPromise(val => val + 'c', 100))
+			seq.addPromise(asyncPromise(val => val, 100))
+			seq.add((val) => { chainedVal =  val})
+			seq.add(() => { done() })
+			seq.start()
+		})
+
+		it('calls timeouts in chain', () => {
+			expect(chainedVal).toEqual('abc')
+		})
+	})
 		
 })
