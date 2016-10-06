@@ -129,6 +129,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	// Adapted & modified from https://github.com/facebook/react/issues/5465#issuecomment-157888325
+	// converts a promise returning function to a cancellable promise returning function.
 	function cancellablePromise(functionThatReturnsAPromise) {
 		var isCanceled = false;
 
