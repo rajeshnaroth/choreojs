@@ -7,21 +7,15 @@ const Choreo = {
 		return Object.create({
 			// For async functions that need to be waited upon.
 			addPromise(functionThatReturnsAPromise) {
-				sequences.push(
-					cancellablePromise(functionThatReturnsAPromise)
-				)
+				sequences.push(cancellablePromise(functionThatReturnsAPromise))
 			},
 			// Sequence is a normal function.
 			add(sequence) {
-				sequences.push(
-					cancellableTimeout(sequence, 1)
-				)
+				sequences.push(cancellableTimeout(sequence, 1))
 			},
 			// Do nothing for sometime.
 			wait(delay) {  
-				sequences.push(
-					cancellableTimeout((arg) => arg, delay)
-				)
+				sequences.push(cancellableTimeout((arg) => arg, delay))
 			},
 			popLast() {
 				sequences.pop()
@@ -61,6 +55,7 @@ function cancellableTimeout(f, milliseconds) {
 }
 
 // Adapted & modified from https://github.com/facebook/react/issues/5465#issuecomment-157888325
+// converts a promise returning function to a cancellable promise returning function.
 function cancellablePromise(functionThatReturnsAPromise) {
 	let isCanceled = false;
 	        
@@ -71,7 +66,7 @@ function cancellablePromise(functionThatReturnsAPromise) {
 				.catch((error) => isCanceled ? reject({isCanceled: true}) : reject(error))
 		}),
 		cancel: () => {
-		  isCanceled = true;
+		  isCanceled = true
 		}
 	}
 }

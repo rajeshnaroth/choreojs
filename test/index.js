@@ -1,7 +1,6 @@
-'use strict';
 import Choreo from '../src/choreo'
 import expect from 'expect'
-const TIMING_ACCURACY = 50
+const TIMING_ACCURACY_IN_MS = 50
 
 const timeInMillisec = () => (new Date()).getTime()
 
@@ -13,7 +12,9 @@ const asyncPromise = (f, millisec) => {
 	})
 }
 
-describe('Choreo', function() {
+describe('choreo.js', function() { // arrow function has no scope,
+	this.timeout(10000);
+
 	describe('Test setup', () => {
 		it('should be ok', () => {
 			expect(true).toBe.ok
@@ -23,8 +24,7 @@ describe('Choreo', function() {
 	describe('Adds functions and executes them', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
-		this.timeout(5000);
-
+		
 		beforeEach((done) => {
 			seq.add(() => { counter[0]++ })
 			seq.add(() => { counter[1]++ })
@@ -43,7 +43,6 @@ describe('Choreo', function() {
 	describe('pop last works', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
-		this.timeout(5000);
 
 		beforeEach((done) => {
 			seq.add(() => { counter[0]++ })
@@ -66,7 +65,6 @@ describe('Choreo', function() {
 		let triggerTiming = [];
 		let startTime = 0;
 		let seq = Choreo.create();
-		this.timeout(5000);
 		console.log("index.js: ", timeInMillisec());
 		        
 		beforeEach((done) => {
@@ -82,9 +80,9 @@ describe('Choreo', function() {
 		})
 
 		it('triggers with correct timings', () => {
-			expect(Math.floor(Math.floor(triggerTiming[0]- startTime)/TIMING_ACCURACY)*TIMING_ACCURACY).toEqual(1000)
-			expect(Math.floor(Math.floor(triggerTiming[1]- startTime)/TIMING_ACCURACY)*TIMING_ACCURACY).toEqual(2500)
-			expect(Math.floor(Math.floor(triggerTiming[2]- startTime)/TIMING_ACCURACY)*TIMING_ACCURACY).toEqual(2600)
+			expect(Math.floor(Math.floor(triggerTiming[0]- startTime)/TIMING_ACCURACY_IN_MS)*TIMING_ACCURACY_IN_MS).toEqual(1000)
+			expect(Math.floor(Math.floor(triggerTiming[1]- startTime)/TIMING_ACCURACY_IN_MS)*TIMING_ACCURACY_IN_MS).toEqual(2500)
+			expect(Math.floor(Math.floor(triggerTiming[2]- startTime)/TIMING_ACCURACY_IN_MS)*TIMING_ACCURACY_IN_MS).toEqual(2600)
 		})
 
 	})
@@ -92,7 +90,6 @@ describe('Choreo', function() {
 	describe('Values are passed through the chain', () => {
 		let seq = Choreo.create()
 		let chainedVal = '';
-		this.timeout(5000);
 
 		beforeEach((done) => {
 			seq.add(() => 'a')
@@ -111,7 +108,6 @@ describe('Choreo', function() {
 	describe('Values are passed through the chain even with waits', () => {
 		let seq = Choreo.create()
 		let values = [];
-		this.timeout(5000);
 
 		beforeEach((done) => {
 			seq.add(() => { return 'a' })
@@ -132,10 +128,9 @@ describe('Choreo', function() {
 		})
 	})
 
-	describe('promises work', () => {
+	describe('Can add Promises', () => {
 		let seq = Choreo.create()
 		let values = [];
-		this.timeout(5000);
 
 		beforeEach((done) => {
 			seq.add(() => { return 'a' })
@@ -150,22 +145,22 @@ describe('Choreo', function() {
 		})
 	})
 
-	describe('promises are called in sequence', () => {
+	describe('Promises are called in sequence', () => {
 		let seq = Choreo.create()
 		let chainedVal = '';
-		this.timeout(5000);
 
 		beforeEach((done) => {
 			seq.add(() => { return 'a' }) // 'a' is the first input to the promise chain
 			seq.addPromise(asyncPromise(val => val + 'b', 100))
+			seq.wait(200)
 			seq.addPromise(asyncPromise(val => val + 'c', 100))
 			seq.addPromise(asyncPromise(val => val, 100))
-			seq.add((val) => { chainedVal =  val})
+			seq.add((val) => { chainedVal = val})
 			seq.add(() => { done() })
 			seq.start()
 		})
 
-		it('calls timeouts in chain', () => {
+		it('relays values through the chain', () => {
 			expect(chainedVal).toEqual('abc')
 		})
 	})
