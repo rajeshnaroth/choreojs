@@ -186,7 +186,7 @@ describe('choreo.js', function() { // arrow function has no scope,
 	})
 
 	// negative conditions
-	describe('non functions cannot be added', () => {
+	describe('negative conditions', () => {
 		let triggerTiming = [];
 		let startTime = 0;
 		
@@ -202,6 +202,20 @@ describe('choreo.js', function() { // arrow function has no scope,
 			expect(function(){
 				seq.addPromise({})
 			}).toThrow(/action is not a function/)
+		})
+
+		it('should not accept zero wait time', () => {
+			let seq = Choreo.create();
+			expect(function(){
+				seq.wait(0)
+			}).toThrow(/wait time must be greater than zero/)
+		})
+
+		it('should not accept negative wait time', () => {
+			let seq = Choreo.create();
+			expect(function(){
+				seq.wait(-1)
+			}).toThrow(/wait time must be greater than zero/)
 		})
 
 	})

@@ -5,10 +5,6 @@ const Choreo = {
 		let sequences = []
 		let isStarted = false
 		return Object.create({
-			// For async functions that need to be waited upon.
-			addPromise(functionThatReturnsAPromise) {
-				sequences.push(cancellablePromise(functionThatReturnsAPromise))
-			},
 			// Sequence is a normal function or an array of normal functions.
 			add(sequence) {
 				if (Array.isArray(sequence)) {
@@ -17,15 +13,22 @@ const Choreo = {
 					sequences.push(cancellableTimeout(sequence, 1))
 				}
 			},
+			// For async functions that need to be waited upon.
+			addPromise(functionThatReturnsAPromise) {
+				sequences.push(cancellablePromise(functionThatReturnsAPromise))
+			},
 			// Do nothing for sometime.
 			wait(delay) {  
+				if (delay <= 0) {
+					throw new Error('wait time must be greater than zero.')
+				}
 				sequences.push(cancellableTimeout((arg) => arg, delay))
 			},
 			popLast() {
 				sequences.pop()
 			},
 			cancel() {
-				sequences.map(sequence => sequence.cancel())
+				sequences.forEach(sequence => sequence.cancel())
 			},
 			start() {
 				if (!isStarted && sequences.length > 0) {
@@ -71,7 +74,7 @@ function cancellablePromise(functionThatReturnsAPromise) {
 	if (typeof functionThatReturnsAPromise !== 'function') {
 		throw new Error('action is not a function')
 	}
-	
+
 	return {
 		promise: (arg) => new Promise((resolve, reject) => {	
 			functionThatReturnsAPromise(arg)
