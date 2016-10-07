@@ -9,9 +9,13 @@ const Choreo = {
 			addPromise(functionThatReturnsAPromise) {
 				sequences.push(cancellablePromise(functionThatReturnsAPromise))
 			},
-			// Sequence is a normal function.
+			// Sequence is a normal function or an array of normal functions.
 			add(sequence) {
-				sequences.push(cancellableTimeout(sequence, 1))
+				if (Array.isArray(sequence)) {
+					sequence.forEach((s) => { sequences.push(cancellableTimeout(s, 1)) })
+				} else {
+					sequences.push(cancellableTimeout(sequence, 1))
+				}
 			},
 			// Do nothing for sometime.
 			wait(delay) {  
@@ -38,6 +42,11 @@ const Choreo = {
 // f is a normal function of arity 0. You can send it in curried 
 function cancellableTimeout(f, milliseconds) { 
 	let timerId = 0
+
+	if (typeof f !== 'function') {
+		throw new Error('action is not a function')
+	}
+
 	return {
 		promise: (arg) => new Promise((resolve, reject) =>  {
 			timerId = setTimeout(
@@ -58,7 +67,11 @@ function cancellableTimeout(f, milliseconds) {
 // converts a promise returning function to a cancellable promise returning function.
 function cancellablePromise(functionThatReturnsAPromise) {
 	let isCanceled = false;
-	        
+
+	if (typeof functionThatReturnsAPromise !== 'function') {
+		throw new Error('action is not a function')
+	}
+	
 	return {
 		promise: (arg) => new Promise((resolve, reject) => {	
 			functionThatReturnsAPromise(arg)

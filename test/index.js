@@ -40,6 +40,27 @@ describe('choreo.js', function() { // arrow function has no scope,
 		})		
 	})
 
+	describe('Arrays of functions', () => {
+		let seq = Choreo.create()
+		let counter = [0, 0, 0];
+		
+		beforeEach((done) => {
+			seq.add([
+				() => { counter[0]++ },
+				() => { counter[1]++ },
+				() => { counter[2]++ },
+				() => { done() }
+			])
+			seq.start()
+		})
+
+		it(' can add arrays and call them', () => {
+			expect(counter[0]).toEqual(1)
+			expect(counter[1]).toEqual(1)
+			expect(counter[2]).toEqual(1)
+		})		
+	})
+
 	describe('pop last works', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
@@ -65,7 +86,6 @@ describe('choreo.js', function() { // arrow function has no scope,
 		let triggerTiming = [];
 		let startTime = 0;
 		let seq = Choreo.create();
-		console.log("index.js: ", timeInMillisec());
 		        
 		beforeEach((done) => {
 			seq.wait(1000)
@@ -163,6 +183,27 @@ describe('choreo.js', function() { // arrow function has no scope,
 		it('relays values through the chain', () => {
 			expect(chainedVal).toEqual('abc')
 		})
+	})
+
+	// negative conditions
+	describe('non functions cannot be added', () => {
+		let triggerTiming = [];
+		let startTime = 0;
+		
+		it('cannot add non function', () => {
+			let seq = Choreo.create();
+			expect(function(){
+				seq.add({})
+			}).toThrow(/action is not a function/)
+		})
+
+		it('cannot add non function as promise', () => {
+			let seq = Choreo.create();
+			expect(function(){
+				seq.addPromise({})
+			}).toThrow(/action is not a function/)
+		})
+
 	})
 		
 })
