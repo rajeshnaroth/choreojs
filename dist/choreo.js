@@ -66,30 +66,34 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Choreo = {
 		create: function create() {
+			// state variable
 			var sequences = [];
 			var isStarted = false;
-			return Object.create({
-				// Sequence is a normal function or an array of normal functions.
-				add: function add(sequence) {
-					if (Array.isArray(sequence)) {
-						sequence.forEach(function (s) {
-							sequences.push(cancellableTimeout(s, 1));
-						});
-					} else {
-						sequences.push(cancellableTimeout(sequence, 1));
-					}
-				},
 
-				// For async functions that need to be waited upon.
-				addPromise: function addPromise(functionThatReturnsAPromise) {
-					sequences.push(cancellablePromise(functionThatReturnsAPromise));
+			return Object.create({
+				add: function add() {
+					for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+						args[_key] = arguments[_key];
+					}
+
+					sequences = addToSequence.apply(undefined, [sequences, function (s) {
+						return cancellableTimeout(s, 1);
+					}].concat(args));
+				},
+				addPromise: function addPromise() {
+					for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+						args[_key2] = arguments[_key2];
+					}
+
+					sequences = addToSequence.apply(undefined, [sequences, function (s) {
+						return cancellablePromise(s);
+					}].concat(args));
 				},
 
 				// Do nothing for sometime.
 				wait: function wait(delay) {
-					if (delay <= 0) {
-						throw new Error('wait time must be greater than zero.');
-					}
+					if (delay <= 0) throw new Error('wait time must be greater than zero.');
+
 					sequences.push(cancellableTimeout(function (arg) {
 						return arg;
 					}, delay));
@@ -117,13 +121,30 @@ return /******/ (function(modules) { // webpackBootstrap
 		cancellablePromise: cancellablePromise
 	};
 
+	function addToSequence(currentSequence, seqTransform) {
+		var returnSequence = Array.from(currentSequence);
+
+		for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+			args[_key3 - 2] = arguments[_key3];
+		}
+
+		args.forEach(function (action) {
+			if (Array.isArray(action)) {
+				action.forEach(function (s) {
+					returnSequence.push(seqTransform(s));
+				});
+			} else {
+				returnSequence.push(seqTransform(action));
+			}
+		});
+		return returnSequence;
+	}
+
 	// f is a normal function of arity 0. You can send it in curried 
 	function cancellableTimeout(f, milliseconds) {
 		var timerId = 0;
 
-		if (typeof f !== 'function') {
-			throw new Error('action is not a function');
-		}
+		if (typeof f !== 'function') throw new Error('action is not a function');
 
 		return {
 			promise: function promise(arg) {
@@ -147,9 +168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function cancellablePromise(functionThatReturnsAPromise) {
 		var isCanceled = false;
 
-		if (typeof functionThatReturnsAPromise !== 'function') {
-			throw new Error('action is not a function');
-		}
+		if (typeof functionThatReturnsAPromise !== 'function') throw new Error('action is not a function');
 
 		return {
 			promise: function promise(arg) {

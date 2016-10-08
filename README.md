@@ -1,5 +1,6 @@
 # choreo.js
-Choreograph functions and promises. Quite useful for sequencing UI and event transitions. ES6 only.
+Choreograph functions and promises. Quite useful for sequencing UI and event transitions that can be canelled midway.
+Written in ES6.
 
 ## Installation
     npm install choreojs --save

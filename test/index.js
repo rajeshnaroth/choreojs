@@ -21,7 +21,7 @@ describe('choreo.js', function() { // arrow function has no scope,
 		})
 	})
 	
-	describe('Adds functions and executes them', () => {
+	describe('Single add args', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
 		
@@ -40,7 +40,28 @@ describe('choreo.js', function() { // arrow function has no scope,
 		})		
 	})
 
-	describe('Arrays of functions', () => {
+	describe('Variable add args', () => {
+		let seq = Choreo.create()
+		let counter = [0, 0, 0];
+		
+		beforeEach((done) => {
+			seq.add(
+				() => { counter[0]++ },
+				() => { counter[1]++ },
+				() => { counter[2]++ },
+				() => { done() }
+			)
+			seq.start()
+		})
+
+		it('works with vriable args', () => {
+			expect(counter[0]).toEqual(1)
+			expect(counter[1]).toEqual(1)
+			expect(counter[2]).toEqual(1)
+		})		
+	})
+
+	describe('Add arrays', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
 		
@@ -55,6 +76,29 @@ describe('choreo.js', function() { // arrow function has no scope,
 		})
 
 		it(' can add arrays and call them', () => {
+			expect(counter[0]).toEqual(1)
+			expect(counter[1]).toEqual(1)
+			expect(counter[2]).toEqual(1)
+		})		
+	})
+
+	describe('Combination of args', () => {
+		let seq = Choreo.create()
+		let counter = [0, 0, 0];
+		
+		beforeEach((done) => {
+			seq.add(
+				() => { counter[0]++ },
+				[
+					() => { counter[1]++ },
+					() => { counter[2]++ },
+					() => { done() }
+				]
+			)
+			seq.start()
+		})
+
+		it(' can add arguments individually and as arrays ', () => {
 			expect(counter[0]).toEqual(1)
 			expect(counter[1]).toEqual(1)
 			expect(counter[2]).toEqual(1)

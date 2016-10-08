@@ -2,26 +2,21 @@ import { pipeP } from 'ramda'
 
 const Choreo = {
 	create() {
+		// state variable
 		let sequences = []
 		let isStarted = false
+
 		return Object.create({
-			// Sequence is a normal function or an array of normal functions.
-			add(sequence) {
-				if (Array.isArray(sequence)) {
-					sequence.forEach((s) => { sequences.push(cancellableTimeout(s, 1)) })
-				} else {
-					sequences.push(cancellableTimeout(sequence, 1))
-				}
+			add(...args) {
+				sequences = addToSequence(sequences, (s) => cancellableTimeout(s, 1), ...args)
 			},
-			// For async functions that need to be waited upon.
-			addPromise(functionThatReturnsAPromise) {
-				sequences.push(cancellablePromise(functionThatReturnsAPromise))
+			addPromise(...args) {
+				sequences = addToSequence(sequences, (s) => cancellablePromise(s), ...args)
 			},
 			// Do nothing for sometime.
-			wait(delay) {  
-				if (delay <= 0) {
-					throw new Error('wait time must be greater than zero.')
-				}
+			wait(delay) {
+				if (delay <= 0) throw new Error('wait time must be greater than zero.')
+
 				sequences.push(cancellableTimeout((arg) => arg, delay))
 			},
 			popLast() {
@@ -42,13 +37,23 @@ const Choreo = {
 	cancellablePromise
 }
 
+function addToSequence(currentSequence, seqTransform, ...args) {
+	let returnSequence = Array.from(currentSequence)
+	args.forEach((action) => {
+			if (Array.isArray(action)) {
+				action.forEach((s) => { returnSequence.push(seqTransform(s)) })
+			} else {
+				returnSequence.push(seqTransform(action))
+			}
+		})
+	return returnSequence
+}
+
 // f is a normal function of arity 0. You can send it in curried 
 function cancellableTimeout(f, milliseconds) { 
 	let timerId = 0
 
-	if (typeof f !== 'function') {
-		throw new Error('action is not a function')
-	}
+	if (typeof f !== 'function') throw new Error('action is not a function')
 
 	return {
 		promise: (arg) => new Promise((resolve, reject) =>  {
@@ -71,9 +76,7 @@ function cancellableTimeout(f, milliseconds) {
 function cancellablePromise(functionThatReturnsAPromise) {
 	let isCanceled = false;
 
-	if (typeof functionThatReturnsAPromise !== 'function') {
-		throw new Error('action is not a function')
-	}
+	if (typeof functionThatReturnsAPromise !== 'function') throw new Error('action is not a function')
 
 	return {
 		promise: (arg) => new Promise((resolve, reject) => {	
