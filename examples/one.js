@@ -1,4 +1,4 @@
-import Choreo from 'choreojs'
+import Choreo from '../src/choreo'
 console.log("one.js: ", Choreo);
         
 console.log('examples/one.js start')

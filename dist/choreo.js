@@ -69,18 +69,27 @@ return /******/ (function(modules) { // webpackBootstrap
 			var sequences = [];
 			var isStarted = false;
 			return Object.create({
+				// Sequence is a normal function or an array of normal functions.
+				add: function add(sequence) {
+					if (Array.isArray(sequence)) {
+						sequence.forEach(function (s) {
+							sequences.push(cancellableTimeout(s, 1));
+						});
+					} else {
+						sequences.push(cancellableTimeout(sequence, 1));
+					}
+				},
+
 				// For async functions that need to be waited upon.
 				addPromise: function addPromise(functionThatReturnsAPromise) {
 					sequences.push(cancellablePromise(functionThatReturnsAPromise));
 				},
 
-				// Sequence is a normal function.
-				add: function add(sequence) {
-					sequences.push(cancellableTimeout(sequence, 1));
-				},
-
 				// Do nothing for sometime.
 				wait: function wait(delay) {
+					if (delay <= 0) {
+						throw new Error('wait time must be greater than zero.');
+					}
 					sequences.push(cancellableTimeout(function (arg) {
 						return arg;
 					}, delay));
@@ -89,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					sequences.pop();
 				},
 				cancel: function cancel() {
-					sequences.map(function (sequence) {
+					sequences.forEach(function (sequence) {
 						return sequence.cancel();
 					});
 				},
@@ -111,6 +120,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	// f is a normal function of arity 0. You can send it in curried 
 	function cancellableTimeout(f, milliseconds) {
 		var timerId = 0;
+
+		if (typeof f !== 'function') {
+			throw new Error('action is not a function');
+		}
+
 		return {
 			promise: function promise(arg) {
 				return new Promise(function (resolve, reject) {
@@ -132,6 +146,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	// converts a promise returning function to a cancellable promise returning function.
 	function cancellablePromise(functionThatReturnsAPromise) {
 		var isCanceled = false;
+
+		if (typeof functionThatReturnsAPromise !== 'function') {
+			throw new Error('action is not a function');
+		}
 
 		return {
 			promise: function promise(arg) {
