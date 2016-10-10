@@ -7,7 +7,7 @@ const timeInMillisec = () => (new Date()).getTime()
 const asyncPromise = (f, millisec) => {
 	return (input) => new Promise((resolve, reject) =>  {
 		setTimeout(() => { 
-		        resolve(f(input))
+		        resolve(f.call(undefined, input))
 		    }, millisec)
 	})
 }
@@ -54,7 +54,7 @@ describe('choreo.js', function() { // arrow function has no scope,
 			seq.start()
 		})
 
-		it('works with vriable args', () => {
+		it('works with variable args', () => {
 			expect(counter[0]).toEqual(1)
 			expect(counter[1]).toEqual(1)
 			expect(counter[2]).toEqual(1)
