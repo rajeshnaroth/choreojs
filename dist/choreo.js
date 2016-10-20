@@ -106,11 +106,11 @@ return /******/ (function(modules) { // webpackBootstrap
 						return sequence.cancel();
 					});
 				},
-				start: function start() {
+				start: function start(arg) {
 					if (!isStarted && sequences.length > 0) {
 						_ramda.pipeP.apply(undefined, _toConsumableArray(sequences.map(function (s) {
 							return s.promise;
-						})))('');
+						})))(arg || '');
 						isStarted = true;
 					}
 				}
@@ -122,22 +122,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	function addToSequence(currentSequence, seqTransform) {
-		var returnSequence = Array.from(currentSequence);
-
 		for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
 			args[_key3 - 2] = arguments[_key3];
 		}
 
-		args.forEach(function (action) {
-			if (Array.isArray(action)) {
-				action.forEach(function (s) {
-					returnSequence.push(seqTransform(s));
-				});
-			} else {
-				returnSequence.push(seqTransform(action));
-			}
-		});
-		return returnSequence;
+		return currentSequence.concat(args.reduce(function (result, item) {
+			return Array.isArray(item) ? result.concat(item.map(function (s) {
+				return seqTransform(s);
+			})) : result.concat(seqTransform(item));
+		}, []));
 	}
 
 	// f is a normal function of arity 0. You can send it in curried 
