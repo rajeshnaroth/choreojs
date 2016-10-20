@@ -25,9 +25,9 @@ const Choreo = {
 			cancel() {
 				sequences.forEach(sequence => sequence.cancel())
 			},
-			start() {
+			start(arg) {
 				if (!isStarted && sequences.length > 0) {
-					pipeP(...(sequences.map(s => s.promise)))('')
+					pipeP(...(sequences.map(s => s.promise)))(arg || '')
 					isStarted = true
 				}
 			}
@@ -38,15 +38,19 @@ const Choreo = {
 }
 
 function addToSequence(currentSequence, seqTransform, ...args) {
-	let returnSequence = Array.from(currentSequence)
-	args.forEach((action) => {
+	//let returnSequence = Array.from(currentSequence)
+	return args.reduce(
+		(result, item) => (Array.isArray(item) ? 
+			result.concat(action.map(s => seqTransform(s))) 
+			: result.concat(seqTransform(item)), [])
+	/*args.forEach((action) => {
 			if (Array.isArray(action)) {
 				action.forEach((s) => { returnSequence.push(seqTransform(s)) })
 			} else {
 				returnSequence.push(seqTransform(action))
 			}
 		})
-	return returnSequence
+	return returnSequence*/
 }
 
 // f is a normal function of arity 0. You can send it in curried 
