@@ -1,17 +1,22 @@
-import { pipeP } from 'ramda'
+import { pipeP } from './pipe'
 
 const Choreo = {
 	create() {
-		// state variable
+		// state variables
 		let sequences = []
 		let isStarted = false
+
+		//internal
+		let inputSequence = []
 
 		return Object.create({
 			add(...args) {
 				sequences = addToSequence(sequences, (s) => cancellableTimeout(s, 1), ...args)
+				inputSequence.push({isPromise:false, sequence:args})
 			},
 			addPromise(...args) {
 				sequences = addToSequence(sequences, (s) => cancellablePromise(s), ...args)
+				inputSequence.push({isPromise:true, sequence:args})
 			},
 			// Do nothing for sometime.
 			wait(delay) {
@@ -30,7 +35,8 @@ const Choreo = {
 					pipeP(...(sequences.map(s => s.promise)))(arg || '')
 					isStarted = true
 				}
-			}
+			},
+
 		})
 	},
 	cancellableTimeout,
@@ -58,7 +64,7 @@ function cancellableTimeout(f, milliseconds) {
 			timerId = setTimeout(
 				() => { 
 					timerId = 0 					        
-					resolve(f(arg))
+					resolve(f.call(undefined, arg))
 				}, milliseconds)
 		}),
 		cancel: () => {
