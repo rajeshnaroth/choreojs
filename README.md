@@ -64,8 +64,4 @@ Choreo is ES6 only. You will need to use babel to help with the new 'import' syn
     npm install
     npm run example1
 
-## This module uses ramda's pipe function. Why not just use that?
-pipeP is a wonderful function for chaining promises. But Choreo gives you these extra functionalities:
-* cancel the chain and any pending promises. Very useful in SPAs where you mount and unmount views.
-* chain regular functions not just promises
-* set wait times to precisely choreograph your events.
+
