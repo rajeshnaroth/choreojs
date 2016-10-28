@@ -1,16 +1,7 @@
 import Choreo from '../src/choreo'
 import expect from 'expect'
+import {asyncPromise, timeInMillisec} from './testUtils'
 const TIMING_ACCURACY_IN_MS = 50
-
-const timeInMillisec = () => (new Date()).getTime()
-
-const asyncPromise = (f, millisec) => {
-	return (input) => new Promise((resolve, reject) =>  {
-		setTimeout(() => { 
-		        resolve(f.call(undefined, input))
-		    }, millisec)
-	})
-}
 
 describe('choreo.js', function() { // arrow function has no scope,
 	this.timeout(10000);
@@ -20,7 +11,7 @@ describe('choreo.js', function() { // arrow function has no scope,
 			expect(true).toBe.ok
 		})
 	})
-	
+
 	describe('Single add args', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
