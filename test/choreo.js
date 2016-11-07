@@ -220,6 +220,47 @@ describe('choreo.js', function() { // arrow function has no scope,
 		})
 	})
 
+	describe('Sequence can loop', () => {
+		let seq = Choreo.create()
+		let counter = [0, 1, 2];
+
+		beforeEach((done) => {
+			seq.add(() => { counter[0]++ })
+			seq.add(() => { counter[1]++ })
+			seq.add(() => { counter[2]++ })
+			//seq.add(() => { done() })
+			seq.loop(2)
+			seq.start()
+			setTimeout(() => {done()}, 100)
+		})
+
+		it('calls functions in a loop twice', () => {
+			expect(counter[0]).toEqual(2)
+			expect(counter[1]).toEqual(3)
+			expect(counter[2]).toEqual(4)
+		})
+	})
+
+	describe('Sequence can loop promises', () => {
+		let seq = Choreo.create()
+		let chainedVal = '';
+
+		beforeEach((done) => {
+			seq.add((val) => { return chainedVal + 'a' })
+			seq.addPromise(asyncPromise(val => val + 'b', 100))
+			seq.wait(200)
+			seq.addPromise(asyncPromise(val => val + 'c', 100))
+			seq.add((val) => { chainedVal = val})
+			seq.loop(2)
+			seq.start('a')
+			setTimeout(() => {done()}, 2000)
+		})
+
+		it('calls promises in a loop twice', () => {
+			expect(chainedVal).toEqual('abcabc')
+		})
+	})
+
 	// negative conditions
 	describe('negative conditions', () => {
 		let triggerTiming = [];

@@ -5,6 +5,7 @@ const Choreo = {
 		// state variables
 		let sequences = []
 		let isStarted = false
+		let nRepeat = 0
 
 		//internal
 		let inputSequence = []
@@ -12,17 +13,18 @@ const Choreo = {
 		return Object.create({
 			add(...args) {
 				sequences = addToSequence(sequences, (s) => cancellableTimeout(s, 1), ...args)
-				inputSequence.push({isPromise:false, sequence:args})
+				inputSequence.push({type:'function', data:args})
 			},
 			addPromise(...args) {
 				sequences = addToSequence(sequences, (s) => cancellablePromise(s), ...args)
-				inputSequence.push({isPromise:true, sequence:args})
+				inputSequence.push({type:'promise', data:args})
 			},
-			// Do nothing for sometime.
+			// Do nothing for sometime. Just return the input arg unaltered (arg) => arg
 			wait(delay) {
 				if (delay <= 0) throw new Error('wait time must be greater than zero.')
 
-				sequences.push(cancellableTimeout((arg) => arg, delay))
+				sequences = addToSequence(sequences, (s) => cancellableTimeout(s, delay), (arg) => arg)
+				inputSequence.push({type:'delay', data:delay})
 			},
 			popLast() {
 				sequences.pop()
@@ -30,17 +32,47 @@ const Choreo = {
 			cancel() {
 				sequences.forEach(sequence => sequence.cancel())
 			},
-			start(arg) {
-				if (!isStarted && sequences.length > 0) {
-					pipeP(...(sequences.map(s => s.promise)))(arg || '')
+			start(firstArg) {
+				// Append a repeater hook
+				let rs = repeater(inputSequence, nRepeat)
+				this.add(rs)
+
+				if (!isStarted) { // ensure you can only start once
+					pipeP(...(sequences.map(s => s.promise)))(firstArg || '')
 					isStarted = true
 				}
 			},
+			loop(n) { // integer or infinity
+				if (n <= 0) throw new Error('Repeat value must be > 0. Default value is 1')
+				nRepeat = n - 1
+			}
 
 		})
 	},
 	cancellableTimeout,
 	cancellablePromise
+}
+
+function repeater(originalSequence, repetitionsLeft) {
+	return (arg) => {
+		if (repetitionsLeft-- > 0 || repetitionsLeft === Infinity) {
+			pipeP(...(constructRepeatSequence(originalSequence).map(s => s.promise)))(arg || '')
+		}
+	}
+}
+
+function constructRepeatSequence(inputSequence) {
+	return inputSequence.reduce((result, snapshot) => {
+		switch (snapshot.type) {
+			case 'delay':
+				return addToSequence(result, (s) => cancellableTimeout(s, snapshot.data), (arg) => arg)
+			case 'promise':
+				return addToSequence(result, (s) => cancellablePromise(s), ...snapshot.data)
+			case 'function':
+				return addToSequence(result, (s) => cancellableTimeout(s, 1), ...snapshot.data)
+		}
+	}, [])
+
 }
 
 function addToSequence(currentSequence, seqTransform, ...args) {
@@ -61,8 +93,7 @@ function cancellableTimeout(f, milliseconds) {
 
 	return {
 		promise: (arg) => new Promise((resolve, reject) =>  {
-			timerId = setTimeout(
-				() => { 
+			timerId = setTimeout(() => {
 					timerId = 0 					        
 					resolve(f.call(undefined, arg))
 				}, milliseconds)
