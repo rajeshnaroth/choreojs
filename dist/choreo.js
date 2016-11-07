@@ -69,6 +69,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			// state variables
 			var sequences = [];
 			var isStarted = false;
+			var nRepeat = 0;
 
 			//internal
 			var inputSequence = [];
@@ -82,7 +83,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					sequences = addToSequence.apply(undefined, [sequences, function (s) {
 						return cancellableTimeout(s, 1);
 					}].concat(args));
-					inputSequence.push({ isPromise: false, sequence: args });
+					inputSequence.push({ type: 'function', data: args });
 				},
 				addPromise: function addPromise() {
 					for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
@@ -92,16 +93,19 @@ return /******/ (function(modules) { // webpackBootstrap
 					sequences = addToSequence.apply(undefined, [sequences, function (s) {
 						return cancellablePromise(s);
 					}].concat(args));
-					inputSequence.push({ isPromise: true, sequence: args });
+					inputSequence.push({ type: 'promise', data: args });
 				},
 
-				// Do nothing for sometime.
+				// Do nothing for sometime. Just return the input arg unaltered (arg) => arg
 				wait: function wait(delay) {
 					if (delay <= 0) throw new Error('wait time must be greater than zero.');
 
-					sequences.push(cancellableTimeout(function (arg) {
+					sequences = addToSequence(sequences, function (s) {
+						return cancellableTimeout(s, delay);
+					}, function (arg) {
 						return arg;
-					}, delay));
+					});
+					inputSequence.push({ type: 'delay', data: delay });
 				},
 				popLast: function popLast() {
 					sequences.pop();
@@ -111,13 +115,23 @@ return /******/ (function(modules) { // webpackBootstrap
 						return sequence.cancel();
 					});
 				},
-				start: function start(arg) {
-					if (!isStarted && sequences.length > 0) {
+				start: function start(firstArg) {
+					// Append a repeater hook
+					var rs = repeater(inputSequence, nRepeat);
+					this.add(rs);
+
+					if (!isStarted) {
+						// ensure you can only start once
 						_pipe.pipeP.apply(undefined, _toConsumableArray(sequences.map(function (s) {
 							return s.promise;
-						})))(arg || '');
+						})))(firstArg || '');
 						isStarted = true;
 					}
+				},
+				loop: function loop(n) {
+					// integer or infinity
+					if (n <= 0) throw new Error('Repeat value must be > 0. Default value is 1');
+					nRepeat = n - 1;
 				}
 			});
 		},
@@ -125,6 +139,37 @@ return /******/ (function(modules) { // webpackBootstrap
 		cancellableTimeout: cancellableTimeout,
 		cancellablePromise: cancellablePromise
 	};
+
+	function repeater(originalSequence, repetitionsLeft) {
+		return function (arg) {
+			if (repetitionsLeft-- > 0 || repetitionsLeft === Infinity) {
+				_pipe.pipeP.apply(undefined, _toConsumableArray(constructRepeatSequence(originalSequence).map(function (s) {
+					return s.promise;
+				})))(arg || '');
+			}
+		};
+	}
+
+	function constructRepeatSequence(inputSequence) {
+		return inputSequence.reduce(function (result, snapshot) {
+			switch (snapshot.type) {
+				case 'delay':
+					return addToSequence(result, function (s) {
+						return cancellableTimeout(s, snapshot.data);
+					}, function (arg) {
+						return arg;
+					});
+				case 'promise':
+					return addToSequence.apply(undefined, [result, function (s) {
+						return cancellablePromise(s);
+					}].concat(_toConsumableArray(snapshot.data)));
+				case 'function':
+					return addToSequence.apply(undefined, [result, function (s) {
+						return cancellableTimeout(s, 1);
+					}].concat(_toConsumableArray(snapshot.data)));
+			}
+		}, []);
+	}
 
 	function addToSequence(currentSequence, seqTransform) {
 		for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
