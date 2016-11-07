@@ -1,6 +1,6 @@
 # choreo.js
-Choreograph functions and promises. Quite useful for sequencing UI and event transitions that can be canelled midway.
-Written in ES6.
+Choreograph functions and promises. Quite useful for sequencing UI and event transitions that can be cancelled midway.
+Written in ES6. Only 3K minified. No other package dependencies.
 
 ## Installation
     npm install choreojs --save
@@ -39,11 +39,10 @@ When User clicks on a button.
 - Stop the spinner
 - Display the results (Maybe add some cool css transitions)
 
-This is quite straightforward with choreojs
-The following two lines will kick off a json request (assuming that getJson is a promise)
+This is quite straightforward with choreojs. It flattens the actions to be taken. You just need to feed them as normal functions or promises. Below we are going to assume that getJson is a promise.
 
     seq.add(() => $('#spinner').show())
-    seq.add(() => api) // Remember, you can relay data from one to next. Very similar to pointfree style in pipeP
+    seq.add(() => 'http://path/to/api') // You can relay data from one to next. Very similar to pointfree style in pipeP
     seq.addPromise(getJson)
     seq.add((val) => { $('#spinner').hide(); return val;} ) // you simply relay the json result to the next function
     seq.add((val) => $('#results').text(val) )
@@ -57,11 +56,12 @@ The following two lines will kick off a json request (assuming that getJson is a
 * [Choreojs Git](https://github.com/rajeshnaroth/choreo.git)
 
 ## How to run the examples in the package
-Choreo is ES6 only. You will need to use babel to help with the new 'import' syntax in ES6. To run the examples here do:
+Choreo is written in ES6 but is published in both ES5 & ES6. You will need to use babel to help with the new 'import' syntax in ES6. To run the examples here do:
 
     git clone https://github.com/rajeshnaroth/choreo.git
     cd choreo
     npm install
-    npm run example1
+    npm test
+    npm run examples
 
 
