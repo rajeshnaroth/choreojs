@@ -31,6 +31,27 @@ describe('choreo.js', function() { // arrow function has no scope,
 		})		
 	})
 
+	describe('Chaining', () => {
+		let counter = [0, 0, 0];
+		
+		beforeEach((done) => {
+			Choreo.create()
+				.add(() => { counter[0]++ })
+				.wait(100)
+				.addPromise(asyncPromise(() => {counter[1]++}, 100))
+				.add(() => { counter[2]++ })
+				.popLast()
+				.add(() => { done() })
+				.start()
+		})
+
+		it('can chain choreo functions', () => {
+			expect(counter[0]).toEqual(1)
+			expect(counter[1]).toEqual(1)
+			expect(counter[2]).toEqual(0)
+		})		
+	})
+
 	describe('Variable add args', () => {
 		let seq = Choreo.create()
 		let counter = [0, 0, 0];
@@ -262,10 +283,10 @@ describe('choreo.js', function() { // arrow function has no scope,
 	})
 
 	// negative conditions
-	describe('negative conditions', () => {
+	describe('negative conditions 1', () => {
 		let triggerTiming = [];
 		let startTime = 0;
-		
+
 		it('cannot add non function', () => {
 			let seq = Choreo.create();
 			expect(function(){
@@ -284,16 +305,47 @@ describe('choreo.js', function() { // arrow function has no scope,
 			let seq = Choreo.create();
 			expect(function(){
 				seq.wait(0)
-			}).toThrow(/wait time must be greater than zero/)
+				seq.start()
+			}).toThrow(/must be a number greater than zero/)
+		})
+
+		it('should not accept non numeric wait time', () => {
+			let seq = Choreo.create();
+			expect(function(){
+				seq.wait('xyz')
+				seq.start()
+			}).toThrow(/must be a number greater than zero/)
 		})
 
 		it('should not accept negative wait time', () => {
 			let seq = Choreo.create();
 			expect(function(){
 				seq.wait(-1)
-			}).toThrow(/wait time must be greater than zero/)
+				seq.start()
+			}).toThrow(/must be a number greater than zero/)
 		})
 
+	})
+
+	describe('Initialization', () => {
+		let seq = Choreo.create([
+			() => { counter[0]++ },
+			{ promise: asyncPromise(() => {counter[1]++}, 100) },
+			{ wait: 1000 },
+			() => { counter[2]++ }
+		])
+		let counter = [0, 0, 0];
+		
+		beforeEach((done) => {
+			seq.add(() => { done() })
+			seq.start()
+		})
+
+		it('adds and calls functions', () => {
+			expect(counter[0]).toEqual(1)
+			expect(counter[1]).toEqual(1)
+			expect(counter[2]).toEqual(1)
+		})		
 	})
 		
 })

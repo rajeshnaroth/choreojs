@@ -1,7 +1,7 @@
 import { pipeP } from './pipe'
 
 const Choreo = {
-	create() {
+	create(shortHand=[]) {
 		// state variables
 		let sequences = []
 		let isStarted = false
@@ -10,41 +10,74 @@ const Choreo = {
 		//internal
 		let inputSequence = []
 
+		if (!Array.isArray(shortHand)) throw new Error('Choreo initialization is not an array')
+
+		shortHand.forEach((seq) => {
+			if (typeof seq === 'function') {
+				_add(seq)
+			} else if (typeof seq === 'object' && seq.promise) {
+				_addPromise(seq.promise)
+			} else if (typeof seq === 'object' && seq.wait) {
+				_wait(seq.wait)
+			}
+		})
+
+		// Functions _add, _addPromise and _wait will modify states: sequence and inputSequence
+		function _add(...args) {
+			sequences = addToSequence(sequences, (s) => cancellableTimeout(s, 1), ...args)
+			inputSequence.push({type:'function', data:args})
+		}
+
+		function _addPromise(...args) {
+			console.log('_addPromise: ', args)
+			sequences = addToSequence(sequences, (s) => cancellablePromise(s), ...args)
+			inputSequence.push({type:'promise', data:args})
+			return this
+		}
+
+		function _wait(delay) {
+			if (!(Number(delay) > 0)) throw new Error('time:' + delay + ' must be a number greater than zero.')
+
+			sequences = addToSequence(sequences, (s) => cancellableTimeout(s, delay), (arg) => arg)
+			inputSequence.push({type:'delay', data:delay})
+			return this
+		}
+
 		return Object.create({
 			add(...args) {
-				sequences = addToSequence(sequences, (s) => cancellableTimeout(s, 1), ...args)
-				inputSequence.push({type:'function', data:args})
+				_add(...args)
+				return this
 			},
 			addPromise(...args) {
-				sequences = addToSequence(sequences, (s) => cancellablePromise(s), ...args)
-				inputSequence.push({type:'promise', data:args})
+				_addPromise(...args)
+				return this
 			},
 			// Do nothing for sometime. Just return the input arg unaltered (arg) => arg
 			wait(delay) {
-				if (delay <= 0) throw new Error('wait time must be greater than zero.')
-
-				sequences = addToSequence(sequences, (s) => cancellableTimeout(s, delay), (arg) => arg)
-				inputSequence.push({type:'delay', data:delay})
+				_wait(delay)
+				return this
 			},
 			popLast() {
 				sequences.pop()
+				return this
 			},
 			cancel() {
 				sequences.forEach(sequence => sequence.cancel())
 			},
 			start(firstArg) {
 				// Append a repeater hook
-				let rs = repeater(inputSequence, nRepeat)
-				this.add(rs)
+				this.add(repeater(inputSequence, nRepeat))
 
 				if (!isStarted) { // ensure you can only start once
 					pipeP(...(sequences.map(s => s.promise)))(firstArg || '')
 					isStarted = true
 				}
+				return this
 			},
 			loop(n) { // integer or infinity
 				if (n <= 0) throw new Error('Repeat value must be > 0. Default value is 1')
 				nRepeat = n - 1
+				return this
 			}
 
 		})
@@ -88,7 +121,8 @@ function addToSequence(currentSequence, seqTransform, ...args) {
 // f is a normal function of arity 0. You can send it in curried 
 function cancellableTimeout(f, milliseconds) { 
 	let timerId = 0
-
+	
+	if (Number(milliseconds) === NaN || milliseconds <= 0) throw new Error('time:' + milliseconds + ' must be a number greater than zero.')
 	if (typeof f !== 'function') throw new Error('action is not a function')
 
 	return {
@@ -96,7 +130,7 @@ function cancellableTimeout(f, milliseconds) {
 			timerId = setTimeout(() => {
 					timerId = 0 					        
 					resolve(f.call(undefined, arg))
-				}, milliseconds)
+				}, Number(milliseconds))
 		}),
 		cancel: () => {
 			if (timerId > 0) {
